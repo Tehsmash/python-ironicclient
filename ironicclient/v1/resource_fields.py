@@ -62,6 +62,9 @@ class Resource(object):
         'target_provision_state': 'Target Provision State',
         'updated_at': 'Updated At',
         'uuid': 'UUID',
+        'local_link_connection': 'Local Link Connection',
+        'portgroup_uuid': 'Portgroup UUID',
+        'pxe_enabled': 'Pxe boot enabled',
     }
 
     def __init__(self, field_ids, sort_excluded=None):
@@ -183,6 +186,9 @@ PORT_DETAILED_RESOURCE = Resource(
      'created_at',
      'extra',
      'node_uuid',
+     'local_link_connection',
+     'portgroup_uuid',
+     'pxe_enabled',
      'updated_at',
      ],
     sort_excluded=[
@@ -193,6 +199,28 @@ PORT_DETAILED_RESOURCE = Resource(
         'node_uuid',
     ])
 PORT_RESOURCE = Resource(
+    ['uuid',
+     'address',
+     ])
+
+# Portgroups
+PORTGROUP_DETAILED_RESOURCE = Resource(
+    ['uuid',
+     'address',
+     'created_at',
+     'extra',
+     'node_uuid',
+     'name',
+     'updated_at',
+     ],
+    sort_excluded=[
+        'extra',
+        # The server cannot sort on "node_uuid" because it isn't a column in
+        # the "portgroups" database table. "node_id" is stored, but it is
+        # internal to ironic. See bug #1443003 for more details.
+        'node_uuid',
+    ])
+PORTGROUP_RESOURCE = Resource(
     ['uuid',
      'address',
      ])

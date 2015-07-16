@@ -343,6 +343,67 @@ def do_node_port_list(cc, args):
                         sortby_index=None)
 
 
+@cliutils.arg(
+    '--detail',
+    dest='detail',
+    action='store_true',
+    default=False,
+    help="Show detailed information about the portgroups.")
+@cliutils.arg(
+    '--limit',
+    metavar='<limit>',
+    type=int,
+    help='Maximum number of portgroups to return per request, '
+         '0 for no limit. Default is the maximum number used '
+         'by the Ironic API Service.')
+@cliutils.arg(
+    '--marker',
+    metavar='<portgroup>',
+    help='Portgroup UUID (for example, of the last portgroup in the list '
+         'from a previous request). '
+         'Returns the list of portgroups after this UUID.')
+@cliutils.arg(
+    '--sort-key',
+    metavar='<field>',
+    help='Portgroup field that will be used for sorting.')
+@cliutils.arg(
+    '--sort-dir',
+    metavar='<direction>',
+    choices=['asc', 'desc'],
+    help='Sort direction: "asc" (the default) or "desc".')
+@cliutils.arg('node', metavar='<node>', help="UUID of the node.")
+@cliutils.arg(
+    '--fields',
+    nargs='+',
+    dest='fields',
+    metavar='<field>',
+    action='append',
+    default=[],
+    help="One or more portgroup fields. Only these fields will be fetched "
+         "from the server. Can not be used when '--detail' is specified.")
+def do_node_portgroup_list(cc, args):
+    """List the portgroups associated with a node."""
+    if args.detail:
+        fields = res_fields.PORTGROUP_DETAILED_RESOURCE.fields
+        field_labels = res_fields.PORTGROUP_DETAILED_RESOURCE.labels
+    elif args.fields:
+        utils.check_for_invalid_fields(
+            args.fields[0], res_fields.PORTGROUP_DETAILED_RESOURCE.fields)
+        resource = res_fields.Resource(args.fields[0])
+        fields = resource.fields
+        field_labels = resource.labels
+    else:
+        fields = res_fields.PORTGROUP_RESOURCE.fields
+        field_labels = res_fields.PORTGROUP_RESOURCE.labels
+
+    params = utils.common_params_for_list(args, fields, field_labels)
+
+    portgroups = cc.node.list_portgroups(args.node, **params)
+    cliutils.print_list(portgroups, fields,
+                        field_labels=field_labels,
+                        sortby_index=None)
+
+
 @cliutils.arg('node', metavar='<node>', help="Name or UUID of the node.")
 @cliutils.arg(
     'maintenance_mode',

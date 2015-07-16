@@ -20,6 +20,7 @@ from ironicclient.v1 import chassis
 from ironicclient.v1 import driver
 from ironicclient.v1 import node
 from ironicclient.v1 import port
+from ironicclient.v1 import portgroup
 
 
 class Client(object):
@@ -54,3 +55,4 @@ class Client(object):
         self.node = node.NodeManager(self.http_client)
         self.port = port.PortManager(self.http_client)
         self.driver = driver.DriverManager(self.http_client)
+        self.portgroup = portgroup.PortgroupManager(self.http_client)

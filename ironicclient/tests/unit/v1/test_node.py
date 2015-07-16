@@ -48,6 +48,12 @@ PORT = {'id': 456,
         'node_id': 123,
         'address': 'AA:AA:AA:AA:AA:AA',
         'extra': {}}
+PORTGROUP = {'id': 987,
+             'uuid': '11111111-2222-3333-4444-555555555555',
+             'name': 'Port name',
+             'node_id': '66666666-7777-8888-9999-000000000000',
+             'address': 'AA:BB:CC:DD:EE:FF',
+             'extra': {}}
 
 POWER_STATE = {'power_state': 'power off',
                'target_power_state': 'power on'}
@@ -238,6 +244,27 @@ fake_responses = {
             {"ports": [PORT]},
         ),
     },
+    '/v1/nodes/%s/portgroups' % NODE1['uuid']:
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
+        ),
+    },
+    '/v1/nodes/%s/portgroups/detail' % NODE1['uuid']:
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
+        ),
+    },
+    '/v1/nodes/%s/portgroups?fields=uuid,address' % NODE1['uuid']:
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
+        ),
+    },
     '/v1/nodes/%s/maintenance' % NODE1['uuid']:
     {
         'PUT': (
@@ -359,6 +386,20 @@ fake_responses_pagination = {
             {"ports": [PORT]},
         ),
     },
+    '/v1/nodes/%s/portgroups?limit=1' % NODE1['uuid']:
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
+        ),
+    },
+    '/v1/nodes/%s/portgroups?marker=%s' % (NODE1['uuid'], PORTGROUP['uuid']):
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
+        ),
+    },
 }
 
 fake_responses_sorting = {
@@ -388,6 +429,20 @@ fake_responses_sorting = {
         'GET': (
             {},
             {"ports": [PORT]},
+        ),
+    },
+    '/v1/nodes/%s/portgroups?sort_key=updated_at' % NODE1['uuid']:
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
+        ),
+    },
+    '/v1/nodes/%s/portgroups?sort_dir=desc' % NODE1['uuid']:
+    {
+        'GET': (
+            {},
+            {"portgroups": [PORTGROUP]},
         ),
     },
 }
@@ -725,6 +780,98 @@ class NodeManagerTest(testtools.TestCase):
 
     def test_node_port_list_detail_and_fields_fail(self):
         self.assertRaises(exc.InvalidAttribute, self.mgr.list_ports,
+                          NODE1['uuid'], detail=True, fields=['uuid', 'extra'])
+
+    def test_node_portgroup_list(self):
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'])
+        expect = [
+            ('GET', '/v1/nodes/%s/portgroups' % NODE1['uuid'], {}, None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertEqual(1, len(portgroups))
+        self.assertEqual(PORTGROUP['uuid'], portgroups[0].uuid)
+        self.assertEqual(PORTGROUP['address'], portgroups[0].address)
+        self.assertEqual(PORTGROUP['name'], portgroups[0].name)
+
+    def test_node_portgroup_list_limit(self):
+        self.api = utils.FakeAPI(fake_responses_pagination)
+        self.mgr = node.NodeManager(self.api)
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'], limit=1)
+        expect = [
+            ('GET', '/v1/nodes/%s/portgroups?limit=1' % NODE1['uuid'], {},
+             None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertThat(portgroups, HasLength(1))
+        self.assertEqual(PORTGROUP['uuid'], portgroups[0].uuid)
+        self.assertEqual(PORTGROUP['address'], portgroups[0].address)
+        self.assertEqual(PORTGROUP['name'], portgroups[0].name)
+
+    def test_node_portgroup_list_marker(self):
+        self.api = utils.FakeAPI(fake_responses_pagination)
+        self.mgr = node.NodeManager(self.api)
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'],
+                                              marker=PORTGROUP['uuid'])
+        expect = [
+            ('GET', '/v1/nodes/%s/portgroups?marker=%s' % (NODE1['uuid'],
+                                                           PORTGROUP['uuid']),
+             {}, None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertThat(portgroups, HasLength(1))
+
+    def test_node_portgroup_list_sort_key(self):
+        self.api = utils.FakeAPI(fake_responses_sorting)
+        self.mgr = node.NodeManager(self.api)
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'],
+                                              sort_key='updated_at')
+        expect = [
+            ('GET',
+             '/v1/nodes/%s/portgroups?sort_key=updated_at' % NODE1['uuid'],
+             {}, None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertThat(portgroups, HasLength(1))
+        self.assertEqual(PORTGROUP['uuid'], portgroups[0].uuid)
+        self.assertEqual(PORTGROUP['address'], portgroups[0].address)
+        self.assertEqual(PORTGROUP['name'], portgroups[0].name)
+
+    def test_node_portgroup_list_sort_dir(self):
+        self.api = utils.FakeAPI(fake_responses_sorting)
+        self.mgr = node.NodeManager(self.api)
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'], sort_dir='desc')
+        expect = [
+            ('GET',
+             '/v1/nodes/%s/portgroups?sort_dir=desc' % NODE1['uuid'],
+             {}, None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertThat(portgroups, HasLength(1))
+        self.assertEqual(PORTGROUP['uuid'], portgroups[0].uuid)
+        self.assertEqual(PORTGROUP['address'], portgroups[0].address)
+        self.assertEqual(PORTGROUP['name'], portgroups[0].name)
+
+    def test_node_portgroup_list_detail(self):
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'], detail=True)
+        expect = [
+            ('GET', '/v1/nodes/%s/portgroups/detail' % NODE1['uuid'],
+             {}, None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertEqual(1, len(portgroups))
+
+    def test_node_portgroup_list_fields(self):
+        portgroups = self.mgr.list_portgroups(NODE1['uuid'],
+                                              fields=['uuid', 'address'])
+        expect = [
+            ('GET', '/v1/nodes/%s/portgroups?fields=uuid,address' %
+             NODE1['uuid'], {}, None),
+        ]
+        self.assertEqual(expect, self.api.calls)
+        self.assertEqual(1, len(portgroups))
+
+    def test_node_portgroup_list_detail_and_fields_fail(self):
+        self.assertRaises(exc.InvalidAttribute, self.mgr.list_portgroups,
                           NODE1['uuid'], detail=True, fields=['uuid', 'extra'])
 
     def test_node_set_maintenance_true(self):
